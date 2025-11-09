@@ -21,8 +21,7 @@ on:
           - iPhoneSimulator
 
       target-version:
-        description: input a min target platform version to be
-supported
+        description: input a min target platform version to be supported
         required: true
 
       target-arch:
@@ -59,8 +58,7 @@ jobs:
     steps:
       - id:  prepare
         run: |
-          if [ ${{ github.event.inputs.target-arch }} = x86_64 ] ;
-then
+          if [ ${{ github.event.inputs.target-arch }} = x86_64 ] ; then
               printf 'RUNS_ON=macos-13\n' >> "$GITHUB_OUTPUT"
           else
               printf 'RUNS_ON=macos-14\n' >> "$GITHUB_OUTPUT"
@@ -78,32 +76,17 @@ then
     steps:
       - run: export -p
 
-      - run: curl -LO
-https://raw.githubusercontent.com/leleliu008/xcpkg/master/xcpkg
+      - run: curl -LO https://raw.githubusercontent.com/leleliu008/xcpkg/master/xcpkg
       - run: chmod a+x xcpkg
-      - run: ./xcpkg formula-repo-add jakemanger
-https://github.com/jakemanger/xcpkg-formula-repository-official-core
+      - run: ./xcpkg formula-repo-add jakemanger https://github.com/jakemanger/xcpkg-formula-repository-official-core
       - run: ./xcpkg setup
       - run: ./xcpkg update
 
-      - run: ./xcpkg install ${{ github.event.inputs.log-level }}
-${{ github.event.inputs.target-platform }}-${{
-github.event.inputs.target-version }}-${{
-github.event.inputs.target-arch }}/${{
-github.event.inputs.package-name }} --profile=${{
-github.event.inputs.profile }}
+      - run: ./xcpkg install ${{ github.event.inputs.log-level }} ${{ github.event.inputs.target-platform }}-${{ github.event.inputs.target-version }}-${{ github.event.inputs.target-arch }}/${{ github.event.inputs.package-name }} --profile=${{ github.event.inputs.profile }}
 
-      - run: ./xcpkg pack    ${{ github.event.inputs.log-level }}
-${{ github.event.inputs.target-platform }}-${{
-github.event.inputs.target-version }}-${{
-github.event.inputs.target-arch }}/${{
-github.event.inputs.package-name }} -t tar.xz -o .
+      - run: ./xcpkg pack    ${{ github.event.inputs.log-level }} ${{ github.event.inputs.target-platform }}-${{ github.event.inputs.target-version }}-${{ github.event.inputs.target-arch }}/${{ github.event.inputs.package-name }} -t tar.xz -o .
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ github.event.inputs.package-name }}-${{
-github.event.inputs.target-platform }}-${{
-github.event.inputs.target-version }}-${{
-github.event.inputs.target-arch }}-${{ github.event.inputs.profile
-}}
+          name: ${{ github.event.inputs.package-name }}-${{ github.event.inputs.target-platform }}-${{ github.event.inputs.target-version }}-${{ github.event.inputs.target-arch }}-${{ github.event.inputs.profile }}
           path: ./*.tar.xz
