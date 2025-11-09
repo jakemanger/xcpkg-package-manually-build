@@ -79,8 +79,12 @@ jobs:
       - run: curl -LO https://raw.githubusercontent.com/leleliu008/xcpkg/master/xcpkg
       - run: chmod a+x xcpkg
       - run: ./xcpkg setup
-      - run: ./xcpkg formula-repo-add jakemanger https://github.com/jakemanger/xcpkg-formula-repository-official-core
       - run: ./xcpkg update
+
+      # Download custom imagemagick formula with libraw support
+      - run: |
+          mkdir -p ~/.xcpkg/repos.d/official-core/formula
+          curl -o ~/.xcpkg/repos.d/official-core/formula/imagemagick.yml https://raw.githubusercontent.com/jakemanger/xcpkg-formula-repository-official-core/master/formula/imagemagick.yml
 
       - run: ./xcpkg install ${{ github.event.inputs.log-level }} ${{ github.event.inputs.target-platform }}-${{ github.event.inputs.target-version }}-${{ github.event.inputs.target-arch }}/${{ github.event.inputs.package-name }} --profile=${{ github.event.inputs.profile }}
 
