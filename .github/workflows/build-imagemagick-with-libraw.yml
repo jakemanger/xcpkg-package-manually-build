@@ -1,0 +1,59 @@
+name: Build ImageMagick with libraw
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-imagemagick:
+    runs-on: macos-14
+
+    steps:
+      - name: Download xcpkg
+        run: |
+          curl -LO https://raw.githubusercontent.com/leleliu008/xcpkg/master/xcpkg
+          chmod +x xcpkg
+
+      - name: Setup xcpkg
+        run: ./xcpkg setup
+
+      - name: Update xcpkg formulas
+        run: ./xcpkg update
+
+      - name: Replace ImageMagick formula with custom version (includes libraw)
+        run: |
+          curl -o ~/.xcpkg/repos.d/official-core/formula/imagemagick.yml \
+            https://raw.githubusercontent.com/jakemanger/xcpkg-formula-repository-official-core/master/formula/imagemagick.yml
+          echo "Custom ImageMagick formula with libraw installed"
+
+      - name: Build ImageMagick with libraw support
+        run: ./xcpkg install MacOSX-14.0-arm64/imagemagick --profile=release
+
+      - name: Verify libraw support
+        run: |
+          MAGICK_PATH=$(find ~/.xcpkg/installed/MacOSX-14.0-arm64 -name "magick" -type f | head -1)
+          echo "ImageMagick binary: $MAGICK_PATH"
+
+          echo "Version:"
+          "$MAGICK_PATH" -version | head -5
+
+          echo ""
+          echo "Checking for libraw support:"
+          "$MAGICK_PATH" -version | grep -i raw || echo "No 'raw' in version output"
+
+          echo ""
+          echo "Supported formats (RAW):"
+          "$MAGICK_PATH" -list format | grep -iE "dng|cr2|cr3|nef|arw|orf|raf|rw2|sr2" || echo "No RAW formats found"
+
+      - name: Package ImageMagick binary
+        run: |
+          MAGICK_DIR=$(find ~/.xcpkg/installed/MacOSX-14.0-arm64 -type d -name "*imagemagick*" | head -1)
+          cd "$MAGICK_DIR"
+          tar -czf imagemagick-with-libraw-macos-arm64.tar.gz bin lib etc
+          mv imagemagick-with-libraw-macos-arm64.tar.gz ${{ github.workspace }}/
+
+      - name: Upload ImageMagick artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: imagemagick-with-libraw-macos-arm64
+          path: imagemagick-with-libraw-macos-arm64.tar.gz
+          retention-days: 30
