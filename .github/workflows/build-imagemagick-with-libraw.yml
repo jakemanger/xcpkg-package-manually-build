@@ -78,15 +78,11 @@ jobs:
           "$MAGICK_PATH" -list format | grep -iE "dng|cr2|cr3|nef|arw|orf|raf|rw2|sr2" || echo "No RAW formats found"
 
       - name: Package ImageMagick binary
-        run: |
-          MAGICK_DIR=$(find ~/.xcpkg/installed/MacOSX-14.0-arm64 -type d -name "*imagemagick*" | head -1)
-          cd "$MAGICK_DIR"
-          tar -czf imagemagick-with-libraw-macos-arm64.tar.gz bin lib etc
-          mv imagemagick-with-libraw-macos-arm64.tar.gz ${{ github.workspace }}/
+        run: ./xcpkg bundle MacOSX-14.0-arm64/imagemagick .tar.xz
 
       - name: Upload ImageMagick artifact
         uses: actions/upload-artifact@v4
         with:
           name: imagemagick-with-libraw-macos-arm64
-          path: imagemagick-with-libraw-macos-arm64.tar.gz
+          path: ./*.tar.xz
           retention-days: 30
