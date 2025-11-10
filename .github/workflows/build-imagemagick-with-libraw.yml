@@ -13,6 +13,39 @@ jobs:
           curl -LO https://raw.githubusercontent.com/leleliu008/xcpkg/master/xcpkg
           chmod +x xcpkg
 
+      - name: Patch xcpkg for missing compiler environment variables
+        run: |
+          # xcpkg has a bug where it doesn't set XCPKG_COMPILER_* variables needed by wrapper scripts
+          # Add XCPKG_COMPILER_ARGS right after XCPKG_TARGET_FLAGS
+          sed -i.bak1 '/export XCPKG_TARGET_FLAGS=.*-Qunused-arguments"$/a\
+              export XCPKG_COMPILER_ARGS="$XCPKG_TARGET_FLAGS"
+          ' xcpkg
+
+          # Add XCPKG_COMPILER_* variables after XCPKG_OBJC
+          sed -i.bak2 '/export XCPKG_OBJC="\$XCODE_CC"$/a\
+              export XCPKG_COMPILER_C="$XCODE_CC"\
+              export XCPKG_COMPILER_CXX="$XCODE_CXX"\
+              export XCPKG_COMPILER_OBJC="$XCODE_CC"
+          ' xcpkg
+
+          # Add XCPKG_COMPILER_ARGS_FOR_BUILD after XCPKG_NATIVE_FLAGS
+          sed -i.bak3 '/export XCPKG_NATIVE_FLAGS=.*-Qunused-arguments"$/a\
+              export XCPKG_COMPILER_ARGS_FOR_BUILD="$XCPKG_NATIVE_FLAGS"
+          ' xcpkg
+
+          # Add compiler variables to native package installation function
+          sed -i.bak4 '/export LDFLAGS="-L\$PACKAGE_WORKING_DIR\/lib -Wl,-rpath,\$PACKAGE_INSTALL_DIR\/lib \$LDFLAGS"$/a\
+          \
+              # Set compiler variables for wrappers\
+              export XCPKG_COMPILER_C="$XCODE_CC"\
+              export XCPKG_COMPILER_CXX="$XCODE_CXX"\
+              export XCPKG_COMPILER_OBJC="$XCODE_CC"\
+              export XCPKG_COMPILER_ARGS_FOR_BUILD="$XCPKG_NATIVE_FLAGS"
+          ' xcpkg
+
+          rm -f xcpkg.bak*
+          echo "✅ xcpkg patched successfully"
+
       - name: Setup xcpkg
         run: ./xcpkg setup
 
